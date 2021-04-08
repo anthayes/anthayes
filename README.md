@@ -1,7 +1,5 @@
 - 👋 Hi, I’m @anthayes
 - 👀 I’m interested in Cloud stuff
-- 🌱 I’m currently learning AWS
-- 💞️ I’m looking to collaborate on AWS projects
 - 📫 How to reach me - twitter @anthayes
 
 <!---
