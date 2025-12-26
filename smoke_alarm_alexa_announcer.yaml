@@ -100,12 +100,13 @@ action:
       sequence:
         - alias: "Announce smoke detected with room info"
           action: notify.alexa_media
-          target: !input alexa_devices
           data:
+            target: !input alexa_devices
             message: >
               Alert! Smoke has been detected in the {{ area_name }}. 
               Detector: {{ friendly_name }}. 
               Please evacuate immediately and check for fire.
             data:
               type: announce
+              method: speak
         - delay: !input repeat_delay
