@@ -100,8 +100,8 @@ action:
       sequence:
         - alias: "Announce smoke detected"
           action: media_player.play_media
-          target: !input alexa_devices
           data:
+            entity_id: media_player.living_room
             media_content_type: "custom"
             media_content_id: "Simon says Test smoke alarm announcement"
         - delay: !input repeat_delay
