@@ -1,6 +1,6 @@
 blueprint:
-  name: Motion-activated Light - Ant
-  description: Turn on a light when motion is detected.
+  name: Motion-activated Light - Ant (Multi-Period)
+  description: Turn on a light when motion is detected with different settings for different time periods.
   domain: automation
   input:
     motion_entity:
@@ -23,27 +23,122 @@ blueprint:
           min: 0
           max: 3600
           unit_of_measurement: seconds
-    light_brightness:
-      name: Light Brightness
-      description: Brightness level for the light (1-255)
+    
+    # Period 1 - Morning
+    period1_enabled:
+      name: Enable Morning Period
+      description: Enable morning time period
+      default: true
+      selector:
+        boolean:
+    period1_start:
+      name: Morning Start Time
+      description: Start time for morning period
+      default: "06:00:00"
+      selector:
+        time:
+    period1_end:
+      name: Morning End Time
+      description: End time for morning period
+      default: "09:00:00"
+      selector:
+        time:
+    period1_brightness:
+      name: Morning Brightness
+      description: Brightness level for morning (1-255)
       default: 255
       selector:
         number:
           min: 1
           max: 255
           mode: slider
-    time_start:
-      name: Start Time
-      description: Time when the automation should start working
-      default: "00:00:00"
+    
+    # Period 2 - Day
+    period2_enabled:
+      name: Enable Day Period
+      description: Enable day time period
+      default: true
+      selector:
+        boolean:
+    period2_start:
+      name: Day Start Time
+      description: Start time for day period
+      default: "09:00:00"
       selector:
         time:
-    time_end:
-      name: End Time
-      description: Time when the automation should stop working
-      default: "23:59:59"
+    period2_end:
+      name: Day End Time
+      description: End time for day period
+      default: "18:00:00"
       selector:
         time:
+    period2_brightness:
+      name: Day Brightness
+      description: Brightness level for day (1-255)
+      default: 128
+      selector:
+        number:
+          min: 1
+          max: 255
+          mode: slider
+    
+    # Period 3 - Evening
+    period3_enabled:
+      name: Enable Evening Period
+      description: Enable evening time period
+      default: true
+      selector:
+        boolean:
+    period3_start:
+      name: Evening Start Time
+      description: Start time for evening period
+      default: "18:00:00"
+      selector:
+        time:
+    period3_end:
+      name: Evening End Time
+      description: End time for evening period
+      default: "22:00:00"
+      selector:
+        time:
+    period3_brightness:
+      name: Evening Brightness
+      description: Brightness level for evening (1-255)
+      default: 200
+      selector:
+        number:
+          min: 1
+          max: 255
+          mode: slider
+    
+    # Period 4 - Night
+    period4_enabled:
+      name: Enable Night Period
+      description: Enable night time period
+      default: true
+      selector:
+        boolean:
+    period4_start:
+      name: Night Start Time
+      description: Start time for night period
+      default: "22:00:00"
+      selector:
+        time:
+    period4_end:
+      name: Night End Time
+      description: End time for night period
+      default: "06:00:00"
+      selector:
+        time:
+    period4_brightness:
+      name: Night Brightness
+      description: Brightness level for night (1-255)
+      default: 50
+      selector:
+        number:
+          min: 1
+          max: 255
+          mode: slider
 
 # If motion is detected within the delay,
 # we restart the script.
@@ -56,17 +151,68 @@ trigger:
   from: "off"
   to: "on"
 
-condition:
-  - condition: time
-    after: !input time_start
-    before: !input time_end
-
 actions:
-  - alias: "Turn on the light"
-    action: light.turn_on
-    target: !input light_target
-    data:
-      brightness: !input light_brightness
+  - alias: "Choose action based on time period"
+    choose:
+      # Period 1 - Morning
+      - conditions:
+          - condition: template
+            value_template: "{{ states('input_boolean.period1_enabled') == 'on' if 'input_boolean.period1_enabled' in states else true }}"
+          - condition: time
+            after: !input period1_start
+            before: !input period1_end
+        sequence:
+          - alias: "Turn on light - Morning"
+            action: light.turn_on
+            target: !input light_target
+            data:
+              brightness: !input period1_brightness
+      
+      # Period 2 - Day
+      - conditions:
+          - condition: template
+            value_template: "{{ states('input_boolean.period2_enabled') == 'on' if 'input_boolean.period2_enabled' in states else true }}"
+          - condition: time
+            after: !input period2_start
+            before: !input period2_end
+        sequence:
+          - alias: "Turn on light - Day"
+            action: light.turn_on
+            target: !input light_target
+            data:
+              brightness: !input period2_brightness
+      
+      # Period 3 - Evening
+      - conditions:
+          - condition: template
+            value_template: "{{ states('input_boolean.period3_enabled') == 'on' if 'input_boolean.period3_enabled' in states else true }}"
+          - condition: time
+            after: !input period3_start
+            before: !input period3_end
+        sequence:
+          - alias: "Turn on light - Evening"
+            action: light.turn_on
+            target: !input light_target
+            data:
+              brightness: !input period3_brightness
+      
+      # Period 4 - Night
+      - conditions:
+          - condition: template
+            value_template: "{{ states('input_boolean.period4_enabled') == 'on' if 'input_boolean.period4_enabled' in states else true }}"
+          - condition: time
+            after: !input period4_start
+            before: !input period4_end
+        sequence:
+          - alias: "Turn on light - Night"
+            action: light.turn_on
+            target: !input light_target
+            data:
+              brightness: !input period4_brightness
+    
+    # Default case - if no time period matches, don't turn on the light
+    default: []
+  
   - alias: "Wait until there is no motion from device"
     wait_for_trigger:
       trigger: state
