@@ -81,19 +81,19 @@ action:
   - alias: "Get triggered detector info and announce"
     variables:
       triggered_entity: "{{ trigger.entity_id }}"
-      device_id: "{{ device_id(triggered_entity) if triggered_entity.startswith('binary_sensor.') else none }}"
+      friendly_name: "{{ state_attr(trigger.entity_id, 'friendly_name') or trigger.entity_id }}"
       area_name: >
-        {% if device_id %}
-          {% set area_id = area_id(device_id) %}
-          {% if area_id %}
-            {{ area_name(area_id) }}
+        {% set device = device_id(trigger.entity_id) %}
+        {% if device %}
+          {% set area = area_id(device) %}
+          {% if area %}
+            {{ area_name(area) }}
           {% else %}
-            {{ state_attr(triggered_entity, 'friendly_name').split(' ')[0] if state_attr(triggered_entity, 'friendly_name') else 'unknown location' }}
+            unknown location
           {% endif %}
         {% else %}
-          {{ state_attr(triggered_entity, 'friendly_name').split(' ')[0] if state_attr(triggered_entity, 'friendly_name') else 'unknown location' }}
+          unknown location
         {% endif %}
-      friendly_name: "{{ state_attr(triggered_entity, 'friendly_name') or triggered_entity.split('.')[1].replace('_', ' ') }}"
   
   - repeat:
       count: !input repeat_announcements
@@ -105,8 +105,5 @@ action:
           target: !input alexa_devices
           data:
             media_content_type: "custom"
-            media_content_id: >
-              Simon says Alert! Smoke has been detected in the {{ area_name }}. 
-              Detector {{ friendly_name }}. 
-              Please evacuate immediately and check for fire.
+            media_content_id: "Simon says Alert! Smoke detected in {{ area_name }}. Detector {{ friendly_name }}. Please evacuate immediately."
         - delay: !input repeat_delay
