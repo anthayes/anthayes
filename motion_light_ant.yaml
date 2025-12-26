@@ -23,6 +23,15 @@ blueprint:
           min: 0
           max: 3600
           unit_of_measurement: seconds
+    light_brightness:
+      name: Light Brightness
+      description: Brightness level for the light (1-255)
+      default: 255
+      selector:
+        number:
+          min: 1
+          max: 255
+          mode: slider
 
 # If motion is detected within the delay,
 # we restart the script.
@@ -39,6 +48,8 @@ actions:
   - alias: "Turn on the light"
     action: light.turn_on
     target: !input light_target
+    data:
+      brightness: !input light_brightness
   - alias: "Wait until there is no motion from device"
     wait_for_trigger:
       trigger: state
