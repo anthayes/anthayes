@@ -3,20 +3,10 @@ blueprint:
   description: Monitor multiple X-Sense smoke alarms (20+) and announce alerts on Alexa devices with room-specific messages using device areas.
   domain: automation
   input:
-    # Smoke Detector Group
-    smoke_detector_group:
-      name: Smoke Detector Group
-      description: Group or area containing all X-Sense smoke detectors
-      selector:
-        target:
-          entity:
-            domain: binary_sensor
-    
-    # Alternative: Manual Entity List
+    # Smoke Detector Entities
     smoke_detector_entities:
-      name: Smoke Detector Entities (Alternative)
-      description: Manually select smoke detector entities if not using groups
-      default: {}
+      name: Smoke Detector Entities
+      description: Select all your X-Sense smoke detector entities
       selector:
         entity:
           domain: binary_sensor
@@ -77,7 +67,7 @@ max_exceeded: silent
 
 trigger:
   - platform: state
-    entity_id: !input smoke_detector_group
+    entity_id: !input smoke_detector_entities
     from: "off"
     to: "on"
 
@@ -101,7 +91,7 @@ action:
           {% if entity_area %}
             {{ area_name(entity_area) }}
           {% else %}
-            {{ states('input_text.fallback_room_name') if states('input_text.fallback_room_name') != 'unknown' else '!input fallback_room_name' }}
+            !input fallback_room_name
           {% endif %}
         {% endif %}
       friendly_name: "{{ state_attr(triggered_entity, 'friendly_name') or triggered_entity }}"
