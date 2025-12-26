@@ -1,0 +1,122 @@
+blueprint:
+  name: X-Sense Smoke Alarm Alexa Announcer (Multi-Detector)
+  description: Monitor multiple X-Sense smoke alarms (20+) and announce alerts on Alexa devices with room-specific messages using device areas.
+  domain: automation
+  input:
+    # Smoke Detector Group
+    smoke_detector_group:
+      name: Smoke Detector Group
+      description: Group or area containing all X-Sense smoke detectors
+      selector:
+        target:
+          entity:
+            domain: binary_sensor
+    
+    # Alternative: Manual Entity List
+    smoke_detector_entities:
+      name: Smoke Detector Entities (Alternative)
+      description: Manually select smoke detector entities if not using groups
+      default: {}
+      selector:
+        entity:
+          domain: binary_sensor
+          multiple: true
+    
+    # Alexa Devices
+    alexa_devices:
+      name: Alexa Devices
+      description: Alexa devices to announce on (can select multiple)
+      selector:
+        target:
+          entity:
+            domain: media_player
+            integration: alexa_media
+    
+    # Announcement Settings
+    announcement_volume:
+      name: Announcement Volume
+      description: Volume level for announcements (0.0 to 1.0)
+      default: 0.8
+      selector:
+        number:
+          min: 0.0
+          max: 1.0
+          step: 0.1
+          mode: slider
+    
+    repeat_announcements:
+      name: Repeat Announcements
+      description: Number of times to repeat the announcement
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 10
+          mode: slider
+    
+    repeat_delay:
+      name: Delay Between Repeats
+      description: Seconds to wait between repeated announcements
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: seconds
+    
+    # Fallback room name
+    fallback_room_name:
+      name: Fallback Room Name
+      description: Room name to use if area/room cannot be determined
+      default: "unknown location"
+      selector:
+        text:
+
+mode: parallel
+max_exceeded: silent
+
+trigger:
+  - platform: state
+    entity_id: !input smoke_detector_group
+    from: "off"
+    to: "on"
+
+action:
+  - alias: "Set volume on Alexa devices"
+    action: media_player.volume_set
+    target: !input alexa_devices
+    data:
+      volume_level: !input announcement_volume
+  
+  - alias: "Get triggered detector info and announce"
+    variables:
+      triggered_entity: "{{ trigger.entity_id }}"
+      device_id: "{{ device_id(triggered_entity) }}"
+      area_name: >
+        {% set area_id = area_id(device_id) %}
+        {% if area_id %}
+          {{ area_name(area_id) }}
+        {% else %}
+          {% set entity_area = state_attr(triggered_entity, 'area_id') %}
+          {% if entity_area %}
+            {{ area_name(entity_area) }}
+          {% else %}
+            {{ states('input_text.fallback_room_name') if states('input_text.fallback_room_name') != 'unknown' else '!input fallback_room_name' }}
+          {% endif %}
+        {% endif %}
+      friendly_name: "{{ state_attr(triggered_entity, 'friendly_name') or triggered_entity }}"
+  
+  - repeat:
+      count: !input repeat_announcements
+      sequence:
+        - alias: "Announce smoke detected with room info"
+          action: notify.alexa_media
+          target: !input alexa_devices
+          data:
+            message: >
+              Alert! Smoke has been detected in the {{ area_name }}. 
+              Detector: {{ friendly_name }}. 
+              Please evacuate immediately and check for fire.
+            data:
+              type: announce
+        - delay: !input repeat_delay
