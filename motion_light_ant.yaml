@@ -50,13 +50,13 @@ blueprint:
 mode: restart
 max_exceeded: silent
 
-triggers:
-  trigger: state
+trigger:
+  platform: state
   entity_id: !input motion_entity
   from: "off"
   to: "on"
 
-conditions:
+condition:
   - condition: time
     after: !input time_start
     before: !input time_end
