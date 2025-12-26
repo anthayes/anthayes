@@ -99,11 +99,10 @@ action:
       count: !input repeat_announcements
       sequence:
         - alias: "Announce smoke detected with room info"
-          action: tts.speak
+          action: media_player.play_media
           target: !input alexa_devices
           data:
-            message: >
-              Alert! Smoke has been detected in the {{ area_name }}. 
-              Detector {{ friendly_name }}. 
-              Please evacuate immediately and check for fire.
+            media_content_type: "custom"
+            media_content_id: >
+              announce:Alert! Smoke has been detected in the {{ area_name }}. Detector {{ friendly_name }}. Please evacuate immediately and check for fire.
         - delay: !input repeat_delay
