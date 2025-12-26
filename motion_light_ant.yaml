@@ -1,6 +1,6 @@
 blueprint:
-  name: Motion-activated Light - Ant (Multi-Period)
-  description: Turn on a light when motion is detected with different settings for different time periods.
+  name: Motion-activated Light - Ant (Two Periods)
+  description: Turn on a light when motion is detected with different settings for day and night periods.
   domain: automation
   input:
     motion_entity:
@@ -24,28 +24,28 @@ blueprint:
           max: 3600
           unit_of_measurement: seconds
     
-    # Period 1 - Morning
+    # Period 1 - Day
     period1_enabled:
-      name: Enable Morning Period
-      description: Enable morning time period
+      name: Enable Day Period
+      description: Enable day time period
       default: true
       selector:
         boolean:
     period1_start:
-      name: Morning Start Time
-      description: Start time for morning period
-      default: "06:00:00"
+      name: Day Start Time
+      description: Start time for day period
+      default: "08:00:00"
       selector:
         time:
     period1_end:
-      name: Morning End Time
-      description: End time for morning period
-      default: "09:00:00"
+      name: Day End Time
+      description: End time for day period
+      default: "21:00:00"
       selector:
         time:
     period1_brightness:
-      name: Morning Brightness
-      description: Brightness level for morning (1-255)
+      name: Day Brightness
+      description: Brightness level for day (1-255)
       default: 255
       selector:
         number:
@@ -53,84 +53,26 @@ blueprint:
           max: 255
           mode: slider
     
-    # Period 2 - Day
+    # Period 2 - Night
     period2_enabled:
-      name: Enable Day Period
-      description: Enable day time period
-      default: true
-      selector:
-        boolean:
-    period2_start:
-      name: Day Start Time
-      description: Start time for day period
-      default: "09:00:00"
-      selector:
-        time:
-    period2_end:
-      name: Day End Time
-      description: End time for day period
-      default: "18:00:00"
-      selector:
-        time:
-    period2_brightness:
-      name: Day Brightness
-      description: Brightness level for day (1-255)
-      default: 128
-      selector:
-        number:
-          min: 1
-          max: 255
-          mode: slider
-    
-    # Period 3 - Evening
-    period3_enabled:
-      name: Enable Evening Period
-      description: Enable evening time period
-      default: true
-      selector:
-        boolean:
-    period3_start:
-      name: Evening Start Time
-      description: Start time for evening period
-      default: "18:00:00"
-      selector:
-        time:
-    period3_end:
-      name: Evening End Time
-      description: End time for evening period
-      default: "22:00:00"
-      selector:
-        time:
-    period3_brightness:
-      name: Evening Brightness
-      description: Brightness level for evening (1-255)
-      default: 200
-      selector:
-        number:
-          min: 1
-          max: 255
-          mode: slider
-    
-    # Period 4 - Night
-    period4_enabled:
       name: Enable Night Period
       description: Enable night time period
       default: true
       selector:
         boolean:
-    period4_start:
+    period2_start:
       name: Night Start Time
       description: Start time for night period
-      default: "22:00:00"
+      default: "21:00:00"
       selector:
         time:
-    period4_end:
+    period2_end:
       name: Night End Time
       description: End time for night period
-      default: "06:00:00"
+      default: "08:00:00"
       selector:
         time:
-    period4_brightness:
+    period2_brightness:
       name: Night Brightness
       description: Brightness level for night (1-255)
       default: 50
@@ -154,7 +96,7 @@ trigger:
 actions:
   - alias: "Choose action based on time period"
     choose:
-      # Period 1 - Morning
+      # Period 1 - Day
       - conditions:
           - condition: template
             value_template: "{{ states('input_boolean.period1_enabled') == 'on' if 'input_boolean.period1_enabled' in states else true }}"
@@ -162,13 +104,13 @@ actions:
             after: !input period1_start
             before: !input period1_end
         sequence:
-          - alias: "Turn on light - Morning"
+          - alias: "Turn on light - Day"
             action: light.turn_on
             target: !input light_target
             data:
               brightness: !input period1_brightness
       
-      # Period 2 - Day
+      # Period 2 - Night
       - conditions:
           - condition: template
             value_template: "{{ states('input_boolean.period2_enabled') == 'on' if 'input_boolean.period2_enabled' in states else true }}"
@@ -176,39 +118,11 @@ actions:
             after: !input period2_start
             before: !input period2_end
         sequence:
-          - alias: "Turn on light - Day"
-            action: light.turn_on
-            target: !input light_target
-            data:
-              brightness: !input period2_brightness
-      
-      # Period 3 - Evening
-      - conditions:
-          - condition: template
-            value_template: "{{ states('input_boolean.period3_enabled') == 'on' if 'input_boolean.period3_enabled' in states else true }}"
-          - condition: time
-            after: !input period3_start
-            before: !input period3_end
-        sequence:
-          - alias: "Turn on light - Evening"
-            action: light.turn_on
-            target: !input light_target
-            data:
-              brightness: !input period3_brightness
-      
-      # Period 4 - Night
-      - conditions:
-          - condition: template
-            value_template: "{{ states('input_boolean.period4_enabled') == 'on' if 'input_boolean.period4_enabled' in states else true }}"
-          - condition: time
-            after: !input period4_start
-            before: !input period4_end
-        sequence:
           - alias: "Turn on light - Night"
             action: light.turn_on
             target: !input light_target
             data:
-              brightness: !input period4_brightness
+              brightness: !input period2_brightness
     
     # Default case - if no time period matches, don't turn on the light
     default: []
