@@ -32,6 +32,18 @@ blueprint:
           min: 1
           max: 255
           mode: slider
+    time_start:
+      name: Start Time
+      description: Time when the automation should start working
+      default: "00:00:00"
+      selector:
+        time:
+    time_end:
+      name: End Time
+      description: Time when the automation should stop working
+      default: "23:59:59"
+      selector:
+        time:
 
 # If motion is detected within the delay,
 # we restart the script.
@@ -43,6 +55,11 @@ triggers:
   entity_id: !input motion_entity
   from: "off"
   to: "on"
+
+conditions:
+  - condition: time
+    after: !input time_start
+    before: !input time_end
 
 actions:
   - alias: "Turn on the light"
