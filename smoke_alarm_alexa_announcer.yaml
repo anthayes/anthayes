@@ -1,16 +1,17 @@
 blueprint:
   name: X-Sense Smoke Alarm Alexa Announcer (Multi-Detector)
-  description: Monitor multiple X-Sense smoke alarms (20+) and announce alerts on Alexa devices with room-specific messages using device areas.
+  description: Monitor multiple X-Sense smoke alarms (20+) and announce alerts on Alexa devices. Create one automation per detector or use a group.
   domain: automation
   input:
-    # Smoke Detector Entities
-    smoke_detector_entities:
-      name: Smoke Detector Entities
-      description: Select all your X-Sense smoke detector entities
+    # Smoke Detector Group or Single Entity
+    smoke_detector_trigger:
+      name: Smoke Detector Trigger
+      description: Single smoke detector entity, group, or area to monitor
       selector:
         entity:
-          domain: binary_sensor
-          multiple: true
+          domain: 
+            - binary_sensor
+            - group
     
     # Alexa Devices
     alexa_devices:
@@ -67,8 +68,7 @@ max_exceeded: silent
 
 trigger:
   - platform: state
-    entity_id: !input smoke_detector_entities
-    from: "off"
+    entity_id: !input smoke_detector_trigger
     to: "on"
 
 action:
@@ -81,18 +81,17 @@ action:
   - alias: "Get triggered detector info and announce"
     variables:
       triggered_entity: "{{ trigger.entity_id }}"
-      device_id: "{{ device_id(triggered_entity) }}"
+      device_id: "{{ device_id(triggered_entity) if triggered_entity.startswith('binary_sensor.') else none }}"
       area_name: >
-        {% set area_id = area_id(device_id) %}
-        {% if area_id %}
-          {{ area_name(area_id) }}
-        {% else %}
-          {% set entity_area = state_attr(triggered_entity, 'area_id') %}
-          {% if entity_area %}
-            {{ area_name(entity_area) }}
+        {% if device_id %}
+          {% set area_id = area_id(device_id) %}
+          {% if area_id %}
+            {{ area_name(area_id) }}
           {% else %}
             !input fallback_room_name
           {% endif %}
+        {% else %}
+          !input fallback_room_name
         {% endif %}
       friendly_name: "{{ state_attr(triggered_entity, 'friendly_name') or triggered_entity }}"
   
