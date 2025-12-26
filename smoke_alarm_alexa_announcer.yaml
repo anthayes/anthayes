@@ -105,5 +105,5 @@ action:
           target: !input alexa_devices
           data:
             media_content_type: "custom"
-            media_content_id: "Simon says Alert! Smoke detected in {{ area_name }}. Detector {{ friendly_name }}. Please evacuate immediately."
+            media_content_id: "Simon says Smoke alarm activated in {{ area_name }}. Evacuate now."
         - delay: !input repeat_delay
