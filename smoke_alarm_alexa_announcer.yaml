@@ -98,12 +98,10 @@ action:
   - repeat:
       count: !input repeat_announcements
       sequence:
-        - alias: "Update last called device"
-          action: alexa_media.update_last_called
-        - alias: "Announce smoke detected with room info"
+        - alias: "Announce smoke detected"
           action: media_player.play_media
           target: !input alexa_devices
           data:
             media_content_type: "custom"
-            media_content_id: "Simon says Smoke alarm activated. Evacuate now."
+            media_content_id: "Simon says Test smoke alarm announcement"
         - delay: !input repeat_delay
