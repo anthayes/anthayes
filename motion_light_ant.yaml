@@ -146,8 +146,9 @@ actions:
       to: "off"
   - alias: "Wait the number of seconds that has been set"
     delay: !input no_motion_wait
-  - alias: "Turn off the lights"
+  - alias: "Turn off day light"
     action: light.turn_off
-    target:
-      - !input period1_light_target
-      - !input period2_light_target
+    target: !input period1_light_target
+  - alias: "Turn off night light"
+    action: light.turn_off
+    target: !input period2_light_target
