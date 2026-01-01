@@ -1,0 +1,107 @@
+alias: "Multi-Echo Smoke Alarm Announcement"
+description: "Make announcements to multiple Echo devices with area detection"
+trigger:
+  # Multiple smoke detectors - add your actual entity names
+  - platform: state
+    entity_id: binary_sensor.smoke_detector_kitchen
+    from: "off"
+    to: "on"
+    id: "kitchen"
+  - platform: state
+    entity_id: binary_sensor.smoke_detector_living_room
+    from: "off"
+    to: "on"
+    id: "living_room"
+  - platform: state
+    entity_id: binary_sensor.smoke_detector_bedroom
+    from: "off"
+    to: "on"
+    id: "bedroom"
+  - platform: state
+    entity_id: binary_sensor.smoke_detector_hallway
+    from: "off"
+    to: "on"
+    id: "hallway"
+  - platform: state
+    entity_id: binary_sensor.smoke_detector_office
+    from: "off"
+    to: "on"
+    id: "office"
+
+variables:
+  # Get the triggered entity and area info
+  triggered_entity: "{{ trigger.entity_id }}"
+  detector_area: >
+    {% if trigger.id %}
+      {{ trigger.id.replace('_', ' ') }}
+    {% else %}
+      {% set device = device_id(trigger.entity_id) %}
+      {% if device %}
+        {% set area = area_id(device) %}
+        {% if area %}
+          {{ area_name(area) }}
+        {% else %}
+          {{ state_attr(trigger.entity_id, 'friendly_name').split(' ')[0] if state_attr(trigger.entity_id, 'friendly_name') else 'unknown area' }}
+        {% endif %}
+      {% else %}
+        unknown area
+      {% endif %}
+    {% endif %}
+  detector_name: "{{ state_attr(trigger.entity_id, 'friendly_name') or trigger.entity_id.split('.')[1].replace('_', ' ') }}"
+
+action:
+  # Set volume to maximum on all Echo devices
+  - service: media_player.volume_set
+    data:
+      volume_level: 1.0
+    target:
+      entity_id:
+        - media_player.living_room
+        - media_player.kitchen
+        - media_player.bedroom
+        - media_player.office
+  
+  # First announcement with area information
+  - service: media_player.play_media
+    data:
+      media_content_type: "custom"
+      media_content_id: "Simon says Emergency. Smoke detected in {{ detector_area }}. Evacuate immediately."
+    target:
+      entity_id:
+        - media_player.living_room
+        - media_player.kitchen
+        - media_player.bedroom
+        - media_player.office
+  
+  # Wait 5 seconds
+  - delay: "00:00:05"
+  
+  # Second announcement with detector details
+  - service: media_player.play_media
+    data:
+      media_content_type: "custom"
+      media_content_id: "Simon says Smoke alarm {{ detector_name }} activated in {{ detector_area }}. All residents evacuate now."
+    target:
+      entity_id:
+        - media_player.living_room
+        - media_player.kitchen
+        - media_player.bedroom
+        - media_player.office
+  
+  # Wait 5 seconds
+  - delay: "00:00:05"
+  
+  # Final urgent announcement
+  - service: media_player.play_media
+    data:
+      media_content_type: "custom"
+      media_content_id: "Simon says Emergency evacuation. Fire alarm in {{ detector_area }}."
+    target:
+      entity_id:
+        - media_player.living_room
+        - media_player.kitchen
+        - media_player.bedroom
+        - media_player.office
+
+mode: parallel
+max_exceeded: silent

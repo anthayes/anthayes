@@ -1,0 +1,142 @@
+# Script version for reusable announcements with area detection
+alexa_smoke_alarm_announcement:
+  alias: "Smoke Alarm Announcement with Area Detection"
+  fields:
+    detector_entity:
+      description: "The smoke detector entity that triggered"
+      example: "binary_sensor.smoke_detector_kitchen"
+    area_override:
+      description: "Override area name (optional)"
+      example: "kitchen"
+  sequence:
+    - variables:
+        # Determine the area from entity or override
+        detector_area: >
+          {% if area_override is defined and area_override %}
+            {{ area_override }}
+          {% else %}
+            {% set device = device_id(detector_entity) %}
+            {% if device %}
+              {% set area = area_id(device) %}
+              {% if area %}
+                {{ area_name(area) }}
+              {% else %}
+                {% set friendly = state_attr(detector_entity, 'friendly_name') %}
+                {% if friendly %}
+                  {{ friendly.split(' ')[0] }}
+                {% else %}
+                  {{ detector_entity.split('.')[1].split('_')[2] if detector_entity.split('.')[1].split('_')|length > 2 else 'unknown area' }}
+                {% endif %}
+              {% endif %}
+            {% else %}
+              unknown area
+            {% endif %}
+          {% endif %}
+        detector_name: "{{ state_attr(detector_entity, 'friendly_name') or detector_entity.split('.')[1].replace('_', ' ') }}"
+    
+    # Set volume to maximum on all devices
+    - service: media_player.volume_set
+      data:
+        volume_level: 1.0
+      target:
+        entity_id:
+          - media_player.living_room
+          - media_player.kitchen
+          - media_player.bedroom
+          - media_player.office
+    
+    # First announcement
+    - service: media_player.play_media
+      data:
+        media_content_type: "custom"
+        media_content_id: "Simon says Emergency. Smoke detected in {{ detector_area }}. Evacuate immediately."
+      target:
+        entity_id:
+          - media_player.living_room
+          - media_player.kitchen
+          - media_player.bedroom
+          - media_player.office
+    
+    # Wait 5 seconds
+    - delay: "00:00:05"
+    
+    # Second announcement with more details
+    - service: media_player.play_media
+      data:
+        media_content_type: "custom"
+        media_content_id: "Simon says Fire alarm in {{ detector_area }}. All residents evacuate now."
+      target:
+        entity_id:
+          - media_player.living_room
+          - media_player.kitchen
+          - media_player.bedroom
+          - media_player.office
+
+# Generic announcement script for any message
+alexa_emergency_announcement:
+  alias: "Emergency Announcement to All Echos"
+  fields:
+    message:
+      description: "The message to announce"
+      example: "Emergency alert. Please evacuate immediately."
+    repeat_count:
+      description: "Number of times to repeat (default: 2)"
+      example: 3
+  sequence:
+    # Set volume to maximum on all devices
+    - service: media_player.volume_set
+      data:
+        volume_level: 1.0
+      target:
+        entity_id:
+          - media_player.living_room
+          - media_player.kitchen
+          - media_player.bedroom
+          - media_player.office
+    
+    # Repeat announcement
+    - repeat:
+        count: "{{ repeat_count | default(2) }}"
+        sequence:
+          - service: media_player.play_media
+            data:
+              media_content_type: "custom"
+              media_content_id: "Simon says {{ message | default('Emergency alert. Please evacuate immediately.') }}"
+            target:
+              entity_id:
+                - media_player.living_room
+                - media_player.kitchen
+                - media_player.bedroom
+                - media_player.office
+          - delay: "00:00:05"
+
+# Regular announcement script (lower volume)
+alexa_regular_announcement:
+  alias: "Regular Announcement to All Echos"
+  fields:
+    message:
+      description: "The message to announce"
+      example: "Attention. This is a house announcement."
+  sequence:
+    # Set moderate volume
+    - service: media_player.volume_set
+      data:
+        volume_level: 0.6
+      target:
+        entity_id:
+          - media_player.living_room
+          - media_player.kitchen
+          - media_player.bedroom
+          - media_player.office
+    
+    # Make announcement
+    - service: media_player.play_media
+      data:
+        media_content_type: "custom"
+        media_content_id: "Simon says {{ message | default('Attention. This is a house announcement.') }}"
+      target:
+        entity_id:
+          - media_player.living_room
+          - media_player.kitchen
+          - media_player.bedroom
+          - media_player.office

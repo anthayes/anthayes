@@ -8,8 +8,19 @@ blueprint:
       selector:
         entity:
           
-    light_target:
-      name: Light
+    # Period 1 - Day Light Target
+    period1_light_target:
+      name: Day Light
+      description: Light to control during day period
+      selector:
+        target:
+          entity:
+            domain: light
+    
+    # Period 2 - Night Light Target  
+    period2_light_target:
+      name: Night Light
+      description: Light to control during night period
       selector:
         target:
           entity:
@@ -106,7 +117,7 @@ actions:
         sequence:
           - alias: "Turn on light - Day"
             action: light.turn_on
-            target: !input light_target
+            target: !input period1_light_target
             data:
               brightness: !input period1_brightness
       
@@ -120,7 +131,7 @@ actions:
         sequence:
           - alias: "Turn on light - Night"
             action: light.turn_on
-            target: !input light_target
+            target: !input period2_light_target
             data:
               brightness: !input period2_brightness
     
@@ -135,6 +146,8 @@ actions:
       to: "off"
   - alias: "Wait the number of seconds that has been set"
     delay: !input no_motion_wait
-  - alias: "Turn off the light"
+  - alias: "Turn off the lights"
     action: light.turn_off
-    target: !input light_target
+    target:
+      - !input period1_light_target
+      - !input period2_light_target

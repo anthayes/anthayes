@@ -1,0 +1,7 @@
+service: media_player.play_media
+data:
+  media_content_type: "custom"
+  media_content_id: "Simon says There is smoke in Abbie's bedroom"
+target:
+  entity_id:
+    - media_player.all_alexas
